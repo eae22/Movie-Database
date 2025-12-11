@@ -1,42 +1,12 @@
 import { useState } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import './App.css';
 import FilterPanel from './components/FilterPanel';
 import MovieList from './components/MovieList';
+import MovieDetail from './components/MovieDetail';
 
 function App() {
-  // 샘플 영화 데이터 (백엔드 연동 전)
-  const movies = [
-    {
-      title: '기생충',
-      ott: ['넷플릭스'],
-      genre: ['스릴러'],
-      year: 2019,
-      country: 'KOR',
-      rating: 5,
-      allowed_age: '15+',
-    },
-    { title: '인터스텔라', ott: ['티빙'], genre: ['SF'], year: 2014, country: 'USA', rating: 4, allowed_age: '12+' },
-    {
-      title: '극한직업',
-      ott: ['넷플릭스'],
-      genre: ['코미디'],
-      year: 2019,
-      country: 'KOR',
-      rating: 4,
-      allowed_age: '15+',
-    },
-    {
-      title: '겨울왕국',
-      ott: ['디즈니플러스'],
-      genre: ['뮤지컬'],
-      year: 2013,
-      country: 'USA',
-      rating: 5,
-      allowed_age: 'ALL',
-    },
-  ];
+  const navigate = useNavigate();
 
   // 필터 상태
   const [filters, setFilters] = useState({
@@ -48,57 +18,92 @@ function App() {
     rating: [],
   });
 
-  // 필터 적용 함수
-  const applyFilters = () => {
-    let filtered = movies;
+  // 검색 모드: all, title, director
+  const [searchMode, setSearchMode] = useState('all');
+  const [searchText, setSearchText] = useState('');
 
-    // OTT
-    if (filters.ott.length > 0) {
-      filtered = filtered.filter((m) => filters.ott.some((o) => m.ott.includes(o)));
-    }
+  const [movies, setMovies] = useState([]);
 
-    // 장르
-    if (filters.genre.length > 0) {
-      filtered = filtered.filter((m) => filters.genre.some((g) => m.genre.includes(g)));
-    }
+  // 쿼리스트링 생성
+  const buildQueryString = () => {
+    const params = new URLSearchParams();
 
-    // 연도
-    if (filters.year.length > 0) {
-      filtered = filtered.filter((m) =>
-        filters.year.some((y) => {
-          if (y === '1990s') return m.year >= 1990 && m.year < 2000;
-          if (y === '2000s') return m.year >= 2000 && m.year < 2010;
-          if (y === '2010s') return m.year >= 2010 && m.year < 2020;
-          if (y === '2020s') return m.year >= 2020;
-          return false;
-        })
-      );
-    }
+    if (filters.ott.length > 0) params.append('ott', filters.ott.join(','));
+    if (filters.genre.length > 0) params.append('genre', filters.genre.join(','));
+    if (filters.year.length > 0) params.append('year', filters.year.join(','));
+    if (filters.country.length > 0) params.append('country', filters.country.join(','));
+    if (filters.age.length > 0) params.append('age', filters.age.join(','));
 
-    // 국가
-    if (filters.country.length > 0) {
-      filtered = filtered.filter((m) => filters.country.includes(m.country === 'KOR' ? '한국' : '외국'));
-    }
-
-    // 관람 등급
-    if (filters.age.length > 0) {
-      filtered = filtered.filter((m) => filters.age.includes(m.allowed_age));
-    }
-
-    // 평점
     if (filters.rating.length > 0) {
-      filtered = filtered.filter((m) => filters.rating.some((r) => m.rating >= parseInt(r)));
+      const min = Math.min(...filters.rating.map(Number));
+      params.append('ratingMin', String(min));
     }
 
-    return filtered;
+    const trimmed = searchText.trim();
+    if (trimmed !== '') {
+      if (searchMode === 'all' || searchMode === 'title') params.append('title', trimmed);
+
+      if (searchMode === 'all' || searchMode === 'director') params.append('director', trimmed);
+    }
+
+    params.append('sort', 'rating_desc');
+
+    return params.toString();
+  };
+
+  // 검색 버튼 + 백엔드 호출
+  const applyFilters = async () => {
+    const query = buildQueryString();
+    console.log('쿼리:', query);
+
+    const res = await fetch(`http://localhost:3001/movies?${query}`);
+    console.log('/movies 응답 상태코드:', res.status);
+    const data = await res.json();
+    console.log('/movies 응답 데이터:', data);
+    setMovies(data); // 상태 업데이트해서 MovieList에 반영
+  };
+
+  // 영화 클릭 → 상세 페이지로 이동
+  const handleMovieClick = (id) => {
+    navigate(`/movie/${id}`);
   };
 
   return (
     <div>
-      <h1>OTT 영화 탐색 시스템</h1>
-      <FilterPanel filters={filters} setFilters={setFilters} />
-      <button onClick={applyFilters}>검색</button>
-      <MovieList movies={applyFilters()} />
+      <h1>movie-db</h1>
+      <Routes>
+        {/* 메인 페이지 (필터 + 목록) */}
+        <Route
+          path="/"
+          element={
+            <div>
+              <FilterPanel filters={filters} setFilters={setFilters} />
+
+              <div>
+                <select value={searchMode} onChange={(e) => setSearchMode(e.target.value)}>
+                  <option value="all">전체</option>
+                  <option value="title">제목 검색</option>
+                  <option value="director">감독 이름 검색</option>
+                </select>
+
+                <input
+                  type="text"
+                  placeholder="검색어 입력"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                />
+
+                <button onClick={applyFilters}>검색</button>
+              </div>
+
+              <MovieList movies={movies} onMovieClick={handleMovieClick} />
+            </div>
+          }
+        />
+
+        {/* 상세 페이지 */}
+        <Route path="/movie/:id" element={<MovieDetail />} />
+      </Routes>
     </div>
   );
 }

@@ -40,12 +40,13 @@ app.get('/movies', async (req, res) => {
       SELECT 
         M.movie_id,
         M.title,
+        M.country,   
         M.release_date,
         YEAR(M.release_date) AS release_year,
         M.run_time,
         M.allowed_age,
-        GROUP_CONCAT(DISTINCT G.genre_name) AS genres,
-        GROUP_CONCAT(DISTINCT D.name) AS directors,
+        GROUP_CONCAT(DISTINCT G.genre_name SEPARATOR ', ') AS genres,
+        GROUP_CONCAT(DISTINCT D.name SEPARATOR ', ') AS directors,
         AVG(R.rating) AS avg_rating
       FROM Movie M
       JOIN MovieGenre MG ON M.movie_id = MG.movie_id
@@ -69,7 +70,19 @@ app.get('/movies', async (req, res) => {
 
     if (genre) {
       const list = genre.split(',');
-      sql += ` AND G.genre_name IN (${list.map(() => '?').join(',')}) `;
+      const placeholders = list.map(() => '?').join(',');
+
+      // 영화의 장르 중 하나라도 선택한 장르에 속하면 출력
+      sql += `
+    AND EXISTS (
+      SELECT 1
+      FROM MovieGenre MG2
+      JOIN Genre G2 ON MG2.genre_id = G2.genre_id
+      WHERE MG2.movie_id = M.movie_id
+        AND G2.genre_name IN (${placeholders})
+    )
+  `;
+
       params.push(...list);
     }
 
@@ -162,10 +175,11 @@ app.get('/movies/:id', async (req, res) => {
         M.title,
         DATE_FORMAT(M.release_date, '%Y-%m-%d') AS release_date,
         M.country,
+        M.country,
         M.run_time,
         M.allowed_age,
         M.trailer_url,
-        GROUP_CONCAT(DISTINCT G.genre_name) AS genres,
+        GROUP_CONCAT(DISTINCT G.genre_name SEPARATOR ', ') AS genres,
         AVG(R.rating) AS avg_rating
       FROM Movie M
       LEFT JOIN MovieGenre MG ON M.movie_id = MG.movie_id
@@ -217,7 +231,7 @@ app.get('/movies/:id', async (req, res) => {
         user_id,
         rating,
         comment,
-        DATE_FORMAT(created_at, '%Y-%m-%d %H:%i') AS created_at
+        DATE_FORMAT(created_at, '%Y-%m-%d') AS created_at
       FROM Review
       WHERE movie_id = ?
       ORDER BY created_at DESC

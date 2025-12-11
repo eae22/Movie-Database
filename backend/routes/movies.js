@@ -5,18 +5,19 @@ const router = Router();
 
 router.get('/', async (req, res) => {
   try {
-    const { sort = 'rating_desc', ott, genre, year, country, age, ratingMin, title, director } = req.query;
+    const { sort = 'rating_desc', ott, genre, year, country, age, ratingMin, title, director, search } = req.query;
 
     let sql = `
       SELECT 
         M.movie_id,
         M.title,
+        M.country,
         YEAR(M.release_date) AS release_year,
         M.release_date,
         M.run_time,
         M.allowed_age,
-        GROUP_CONCAT(DISTINCT G.genre_name) AS genres,
-        GROUP_CONCAT(DISTINCT D.name) AS directors,
+        GROUP_CONCAT(DISTINCT G.genre_name SEPARATOR ', ') AS genres,
+        GROUP_CONCAT(DISTINCT D.name SEPARATOR ', ') AS directors,
         AVG(R.rating) AS avg_rating
       FROM Movie M
       JOIN MovieGenre MG ON M.movie_id = MG.movie_id
@@ -55,13 +56,26 @@ router.get('/', async (req, res) => {
       sql += ` AND (${cond.join(' OR ')}) `;
     }
 
-    if (country) {
-      const list = country.split(',');
-      const cond = [];
-      if (list.includes('한국')) cond.push("M.country = 'KOR'");
-      if (list.includes('외국')) cond.push("M.country <> 'KOR'");
-      sql += ` AND (${cond.join(' OR ')}) `;
-    }
+    // if (country) {
+    //   console.log('country 파라미터:', country);
+
+    //   const list = country.split(',');
+    //   const cond = [];
+
+    //   // '대한민국', '한국', 'KOR' 같은 값들을 모두 한국으로 취급
+    //   if (list.includes('한국')) {
+    //     cond.push("(TRIM(M.country) = '대한민국' OR TRIM(M.country) = '한국' OR TRIM(M.country) = 'KOR')");
+    //   }
+
+    //   // 외국 영화: 위 3개 값이 아닌 나머지
+    //   if (list.includes('외국')) {
+    //     cond.push("(TRIM(M.country) <> '대한민국' AND TRIM(M.country) <> '한국' AND TRIM(M.country) <> 'KOR')");
+    //   }
+
+    //   if (cond.length > 0) {
+    //     sql += ` AND (${cond.join(' OR ')}) `;
+    //   }
+    // }
 
     if (age) {
       const list = age.split(',');
@@ -77,6 +91,12 @@ router.get('/', async (req, res) => {
     if (director) {
       sql += ` AND D.name LIKE ? `;
       params.push(`%${director}%`);
+    }
+
+    if (search) {
+      sql += ` AND (M.title LIKE ? OR D.name LIKE ?) `;
+      params.push(`%${search}%`, `%${search}%`);
+      console.log('검색 파라미터(search):', search);
     }
 
     sql += ` GROUP BY M.movie_id `;
@@ -111,6 +131,8 @@ router.get('/', async (req, res) => {
 
     sql += order;
 
+    console.log('최종 SQL:', sql);
+    console.log('params:', params);
     const [rows] = await pool.query(sql, params);
     res.json(rows);
   } catch (err) {

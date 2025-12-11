@@ -2,23 +2,58 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 function MovieDetail() {
-  const { id } = useParams(); // ← URL에서 movieId 가져옴
-  const navigate = useNavigate(); // ← 뒤로가기 버튼용
+  const { id } = useParams(); // /movie/:id에서 id 읽기
+  const navigate = useNavigate();
 
   const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchDetail = async () => {
-      const res = await fetch(`http://localhost:3001/movies/${id}`);
-      const json = await res.json();
-      setData(json);
+      try {
+        const res = await fetch(`http://localhost:3001/movies/${id}`);
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(errJson.error || `요청 실패 (status ${res.status})`);
+        }
+        const json = await res.json();
+        console.log('영화 상세 응답:', json);
+        setData(json);
+      } catch (e) {
+        console.error('영화 상세 에러:', e);
+        setError(e.message);
+      }
     };
     fetchDetail();
   }, [id]);
 
+  if (error) {
+    return (
+      <div>
+        <button onClick={() => navigate(-1)}>← 목록으로 돌아가기</button>
+        <p>영화 정보를 불러오는 중 오류가 발생했습니다.</p>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
   if (!data) return <p>로딩 중...</p>;
 
-  const { movie, directors, ott_list, reviews, sameDirectorMovies } = data;
+  // data 구조 보호
+  const movie = data.movie || {};
+  const directors = Array.isArray(data.directors) ? data.directors : [];
+  const ottList = Array.isArray(data.ott_list) ? data.ott_list : [];
+  const reviews = Array.isArray(data.reviews) ? data.reviews : [];
+  const sameDirectorMovies = Array.isArray(data.sameDirectorMovies) ? data.sameDirectorMovies : [];
+
+  if (!movie.movie_id) {
+    return (
+      <div>
+        <button onClick={() => navigate(-1)}>← 목록으로 돌아가기</button>
+        <p>영화 정보를 찾을 수 없습니다.</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -31,13 +66,17 @@ function MovieDetail() {
       <div>러닝타임: {movie.run_time}분</div>
       <div>관람등급: {movie.allowed_age}</div>
       <div>장르: {movie.genres}</div>
-      <div>평균 평점: {movie.avg_rating ? movie.avg_rating.toFixed(1) : 'N/A'}</div>
+      <div>
+        평균 평점:{' '}
+        {movie.avg_rating !== null && movie.avg_rating !== undefined ? Number(movie.avg_rating).toFixed(1) : 'N/A'}
+      </div>
+      <div>제공하는 OTT: {ottList.length > 0 ? ottList.join(', ') : '정보 없음'}</div>
 
       <div>
-        트레일러:{' '}
+        {' '}
         {movie.trailer_url ? (
-          <a href={movie.trailer_url} target="_blank">
-            이동
+          <a href={movie.trailer_url} target="_blank" rel="noreferrer">
+            예고편 보러가기
           </a>
         ) : (
           '없음'
@@ -45,45 +84,45 @@ function MovieDetail() {
       </div>
 
       <h3>감독 정보</h3>
-      <ul>
-        {directors.map((d) => (
-          <li key={d.director_id}>
-            <strong>{d.name}</strong>
-            <div>성별: {d.gender}</div>
-            <div>국적: {d.nationality}</div>
-            <div>출생연도: {d.birth_year}</div>
-          </li>
-        ))}
-      </ul>
-
-      <h3>OTT 제공</h3>
-      <p>{ott_list.join(', ')}</p>
+      <div>
+        {directors.map((d) => {
+          const genderText = d.gender === 'M' ? '남자' : d.gender === 'F' ? '여자' : d.gender;
+          return (
+            <div key={d.director_id} style={{ marginBottom: '12px' }}>
+              <div>이름: {d.name}</div>
+              <div>성별: {genderText}</div>
+              <div>국적: {d.nationality}</div>
+              <div>출생연도: {d.birth_year}</div>
+            </div>
+          );
+        })}
+      </div>
 
       <h3>리뷰</h3>
       {reviews.length === 0 ? (
         <p>등록된 리뷰가 없습니다.</p>
       ) : (
-        <ul>
+        <div>
           {reviews.map((r) => (
-            <li key={r.review_id}>
+            <div key={r.review_id}>
               <div>평점: {r.rating}</div>
               <div>작성자: User {r.user_id}</div>
-              <div>코멘트: {r.comment}</div>
-              <div>작성일: {r.created_at}</div>
-            </li>
+              <div>한줄평: {r.comment}</div>
+              <div>작성일시: {r.created_at}</div>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
 
-      <h3>같은 감독의 다른 작품</h3>
-      {sameDirectorMovies.length === 0 ? (
-        <p>같은 감독의 다른 작품이 없습니다.</p>
-      ) : (
-        <ul>
+      {sameDirectorMovies.length > 0 && (
+        <>
+          <h3>같은 감독의 다른 작품</h3>
           {sameDirectorMovies.map((m) => (
-            <li key={m.movie_id}>{m.title}</li>
+            <div key={m.movie_id} onClick={() => navigate(`/movie/${m.movie_id}`)}>
+              {m.title}
+            </div>
           ))}
-        </ul>
+        </>
       )}
     </div>
   );

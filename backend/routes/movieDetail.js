@@ -11,9 +11,9 @@ router.get('/:id', async (req, res) => {
       `
       SELECT 
         M.*,
-        GROUP_CONCAT(DISTINCT G.genre_name) AS genres,
-        GROUP_CONCAT(DISTINCT D.name) AS directors,
-        GROUP_CONCAT(DISTINCT O.ott_name) AS otts,
+        GROUP_CONCAT(DISTINCT G.genre_name SEPARATOR ', ') AS genres,
+        GROUP_CONCAT(DISTINCT D.name SEPARATOR ', ') AS directors,
+        GROUP_CONCAT(DISTINCT O.ott_name SEPARATOR ', ') AS otts,
         AVG(R.rating) AS avg_rating
       FROM Movie M
       JOIN MovieGenre MG ON M.movie_id = MG.movie_id

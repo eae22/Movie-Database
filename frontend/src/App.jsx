@@ -31,7 +31,7 @@ function App() {
     if (filters.ott.length > 0) params.append('ott', filters.ott.join(','));
     if (filters.genre.length > 0) params.append('genre', filters.genre.join(','));
     if (filters.year.length > 0) params.append('year', filters.year.join(','));
-    if (filters.country.length > 0) params.append('country', filters.country.join(','));
+    // if (filters.country.length > 0) params.append('country', filters.country.join(','));
     if (filters.age.length > 0) params.append('age', filters.age.join(','));
 
     if (filters.rating.length > 0) {
@@ -41,9 +41,11 @@ function App() {
 
     const trimmed = searchText.trim();
     if (trimmed !== '') {
-      if (searchMode === 'all' || searchMode === 'title') params.append('title', trimmed);
-
-      if (searchMode === 'all' || searchMode === 'director') params.append('director', trimmed);
+      if (searchMode === 'title') {
+        params.append('title', trimmed);
+      } else if (searchMode === 'director') {
+        params.append('director', trimmed);
+      }
     }
 
     params.append('sort', 'rating_desc');
@@ -53,14 +55,75 @@ function App() {
 
   // 검색 버튼 + 백엔드 호출
   const applyFilters = async () => {
-    const query = buildQueryString();
-    console.log('쿼리:', query);
+    try {
+      const query = buildQueryString();
+      console.log('쿼리:', query);
 
-    const res = await fetch(`http://localhost:3001/movies?${query}`);
-    console.log('/movies 응답 상태코드:', res.status);
-    const data = await res.json();
-    console.log('/movies 응답 데이터:', data);
-    setMovies(data); // 상태 업데이트해서 MovieList에 반영
+      const res = await fetch(`http://localhost:3001/movies?${query}`);
+      console.log('/movies 응답 상태코드:', res.status);
+
+      const data = await res.json();
+      console.log('/movies 응답 데이터:', data);
+
+      // country 필드 샘플 확인
+      console.log(
+        'country 필드 샘플:',
+        data.slice(0, 5).map((m) => ({
+          title: m.title,
+          country: m.country,
+        }))
+      );
+
+      let filtered = [...data];
+
+      // 국적 필터는 FE에서 처리
+      if (filters.country.length > 0) {
+        const wantKorean = filters.country.includes('한국');
+        const wantForeign = filters.country.includes('외국');
+
+        console.log('국가 필터 상태:', {
+          filtersCountry: filters.country,
+          wantKorean,
+          wantForeign,
+        });
+
+        filtered = filtered.filter((m, idx) => {
+          const rawCountry = m.country;
+          const c = (m.country || '').trim(); // undefined 방지
+          const isKorean = c.includes('대한민국'); // '대한민국'이 들어가면 한국이라고 판단
+
+          // 각 영화별로 로그 찍어보기
+          console.log(`[국가필터] idx=${idx}, title=${m.title}, country='${rawCountry}', isKorean=${isKorean}`);
+
+          if (wantKorean && !wantForeign) return isKorean;
+          if (!wantKorean && wantForeign) return !isKorean;
+          if (wantKorean && wantForeign) return true;
+          통과;
+
+          return true;
+        });
+        console.log('국가 필터 적용 후 개수:', filtered.length);
+      }
+
+      // 전체 검색 모드(all)일 때 제목 or 감독으로 추가 필터링
+      const trimmed = searchText.trim();
+      if (searchMode === 'all' && trimmed !== '') {
+        const keyword = trimmed.toLowerCase();
+        console.log('전체 검색 키워드:', keyword);
+
+        filtered = filtered.filter((m) => {
+          const title = (m.title || '').toLowerCase();
+          const directors = (m.directors || '').toLowerCase();
+
+          return title.includes(keyword) || directors.includes(keyword);
+        });
+        console.log('전체 검색 적용 후 개수:', filtered.length);
+      }
+
+      setMovies(filtered);
+    } catch (e) {
+      console.error('applyFilters 실행 중 에러 발생:', e);
+    }
   };
 
   // 영화 클릭 → 상세 페이지로 이동

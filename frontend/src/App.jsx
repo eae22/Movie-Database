@@ -4,6 +4,7 @@ import './App.css';
 import FilterPanel from './components/FilterPanel';
 import MovieList from './components/MovieList';
 import MovieDetail from './components/MovieDetail';
+import RecommendFilter from './components/RecommendFilter';
 
 function App() {
   const navigate = useNavigate();
@@ -141,11 +142,36 @@ function App() {
 
   return (
     <div>
-      <h1>movie-db</h1>
+      <h1>Pickle</h1>
       <Routes>
-        {/* 메인 페이지 (필터 + 목록) */}
+        {/* home: 버튼 2개 */}
         <Route
           path="/"
+          element={
+            <div style={{ textAlign: 'center', marginTop: '40px' }}>
+              <h2>원하는 기능을 선택하세요</h2>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '24px',
+                  marginTop: '24px',
+                }}
+              >
+                <button onClick={() => navigate('/search')} style={{ padding: '12px 24px', fontSize: '16px' }}>
+                  영화 정렬 / 필터링 검색
+                </button>
+                <button onClick={() => navigate('/recommend')} style={{ padding: '12px 24px', fontSize: '16px' }}>
+                  성별, 나이대별 선호 장르 기반 영화 추천
+                </button>
+              </div>
+            </div>
+          }
+        />
+
+        {/* 검색/필터/정렬 화면 */}
+        <Route
+          path="search/"
           element={
             <div>
               <FilterPanel filters={filters} setFilters={setFilters} />
@@ -172,6 +198,8 @@ function App() {
             </div>
           }
         />
+
+        <Route path="/recommend" element={<RecommendFilter />} />
 
         {/* 상세 페이지 */}
         <Route path="/movie/:id" element={<MovieDetail />} />

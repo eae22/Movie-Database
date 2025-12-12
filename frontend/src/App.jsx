@@ -35,16 +35,7 @@ function App() {
     if (filters.ott.length > 0) params.append('ott', filters.ott.join(','));
     if (filters.genre.length > 0) params.append('genre', filters.genre.join(','));
     if (filters.year.length > 0) params.append('year', filters.year.join(','));
-    // if (filters.country.length > 0) params.append('country', filters.country.join(','));
     if (filters.age.length > 0) params.append('age', filters.age.join(','));
-
-    // if (filters.rating.length > 0) {
-    //   const mins = filters.rating.map((r) => r.min);
-    //   const maxs = filters.rating.map((r) => r.max);
-
-    //   params.append('ratingMin', Math.min(...mins));
-    //   params.append('ratingMax', Math.max(...maxs));
-    // }
 
     const trimmed = searchText.trim();
     if (trimmed !== '') {
@@ -135,14 +126,11 @@ function App() {
     }
   };
 
-  // 영화 클릭 → 상세 페이지로 이동
-  const handleMovieClick = (id) => {
-    navigate(`/movie/${id}`);
-  };
-
   return (
     <div>
-      <h1>Pickle</h1>
+      <h1 style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+        Pickle
+      </h1>
       <Routes>
         {/* home: 버튼 2개 */}
         <Route
@@ -199,10 +187,9 @@ function App() {
           }
         />
 
-        <Route path="/recommend" element={<RecommendFilter />} />
-
         {/* 상세 페이지 */}
         <Route path="/movie/:id" element={<MovieDetail />} />
+        <Route path="/recommend" element={<RecommendFilter />} />
       </Routes>
     </div>
   );

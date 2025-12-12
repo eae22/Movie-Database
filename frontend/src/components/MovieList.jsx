@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function MovieList({ movies, sortOption, setSortOption, enableSort = true, showSort = true }) {
+function MovieList({ movies, sortOption, setSortOption, enableSort = true, showSort = true, viewerInfo, searchState }) {
   const navigate = useNavigate();
 
   if (!movies || movies.length === 0) {
@@ -108,7 +107,17 @@ function MovieList({ movies, sortOption, setSortOption, enableSort = true, showS
             const rating = m.avg_rating === null || m.avg_rating === undefined ? null : Number(m.avg_rating);
 
             return (
-              <tr key={m.movie_id} onClick={() => navigate(`/movie/${m.movie_id}`)}>
+              <tr
+                key={m.movie_id}
+                onClick={() =>
+                  navigate(`/movie/${m.movie_id}`, {
+                    state: {
+                      viewerInfo,
+                      searchState,
+                    },
+                  })
+                }
+              >
                 <td>{m.title}</td>
                 <td>{m.release_year}</td>
                 <td>{m.run_time}분</td>

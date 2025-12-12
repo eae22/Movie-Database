@@ -1,12 +1,9 @@
-// routes/recommend.js
 import { Router } from 'express';
 
-// pool을 직접 import하지 않고,
-// 바깥에서 주입받는 함수 형태로 만든다.
+// pool을 직접 import하지 않고, 바깥에서 주입받는 함수 형태
 function createRecommendRouter(pool) {
   const router = Router();
 
-  // GET /api/recommend?birthYear=2003&gender=여&sort=top5
   router.get('/', async (req, res) => {
     try {
       const { birthYear, gender } = req.query;
@@ -20,21 +17,20 @@ function createRecommendRouter(pool) {
         return res.status(400).json({ error: 'birthYear는 4자리 숫자여야 합니다.' });
       }
 
-      // 1) 나이 / 나이대(10대, 20대, ...) 계산
+      // 나이 / 나이대(10대, 20대, ...) 계산
       const now = new Date();
-      const currentYear = now.getFullYear(); // 예: 2025
-      const age = currentYear - birthYearNum; // 예: 29
+      const currentYear = now.getFullYear();
+      const age = currentYear - birthYearNum;
 
-      let decade = Math.floor(age / 10) * 10; // 예: 20
+      let decade = Math.floor(age / 10) * 10;
       if (decade < 10) decade = 10; // 10대 미만은 10대로 묶기
       if (decade > 90) decade = 90; // 90대 초과는 90대로 묶기
 
       // 같은 나이대의 출생연도 범위 계산
-      // 예: 20대 → 20~29살 → 출생연도 [currentYear-29, currentYear-20]
-      const maxBirthYear = currentYear - decade; // 가장 어린 (예: 2005)
-      const minBirthYear = currentYear - (decade + 9); // 가장 나이 많은 (예: 1996)
+      const maxBirthYear = currentYear - decade;
+      const minBirthYear = currentYear - (decade + 9);
 
-      // 2) 같은 나이대 + 같은 성별인 유저들 찾기
+      // 같은 나이대 + 같은 성별인 유저들 찾기
       const [userRows] = await pool.query(
         `
         SELECT user_id
@@ -61,7 +57,7 @@ function createRecommendRouter(pool) {
         });
       }
 
-      // 3) 이 유저들이 UserFavGenre에 등록한 장르별 개수 집계
+      // 3) 이 user들이 UserFavGenre에 등록한 장르별 개수 집계
       const userPlaceholders = sameGroupUserIds.map(() => '?').join(',');
 
       const [favGenreRows] = await pool.query(
@@ -95,31 +91,26 @@ function createRecommendRouter(pool) {
       let threshold = Math.ceil(groupSize * 0.5); // 50%
       if (threshold < 1) threshold = 1;
 
-      // 인원이 너무 적을 때(3명 이하)는 최소 1명만 좋아해도 OK
+      // 인원이 3명 이하일 때는 최소 1명만 좋아해도 OK
       if (groupSize <= 3) {
         threshold = 1;
       }
 
-      // 과반수 이상이 선호하는 장르
       let strongGenres = favGenreRows.filter((row) => row.cnt >= threshold);
 
-      // fallback: 조건 만족 장르가 없으면 선호 카운트 상위 N개 사용
+      // 조건 만족 장르가 없으면 상위 3개 사용
       let usedFallback = false;
       if (strongGenres.length === 0) {
         usedFallback = true;
 
-        const FALLBACK_TOP_K = 3; // 상위 N개 장르 사용
-        strongGenres = [...favGenreRows]
-          .sort((a, b) => b.cnt - a.cnt) // cnt 내림차순
-          .slice(0, FALLBACK_TOP_K); // 상위 N개
+        const FALLBACK_TOP_K = 3;
+        strongGenres = [...favGenreRows].sort((a, b) => b.cnt - a.cnt).slice(0, FALLBACK_TOP_K);
       }
 
       const strongGenreIds = strongGenres.map((g) => g.genre_id);
       const genrePlaceholders = strongGenreIds.map(() => '?').join(',');
 
-      // strongGenreIds, genrePlaceholders까지 구해진 상태라고 가정
-
-      const { sort = 'top' } = req.query; // 기본값: top
+      const { sort = 'top' } = req.query;
 
       let orderClause = '';
 
@@ -202,9 +193,9 @@ function createRecommendRouter(pool) {
         ageGroup: `${decade}대`,
         usersInGroup: groupSize,
         threshold,
-        usedFallback, // fallback 썼는지 여부
-        genres: strongGenres, // { genre_id, genre_name, cnt } 배열
-        movies: movieRows, // 추천 대상 영화들
+        usedFallback,
+        genres: strongGenres,
+        movies: movieRows,
       });
     } catch (err) {
       console.error(err);

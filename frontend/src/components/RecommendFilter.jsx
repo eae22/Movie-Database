@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import MovieList from './MovieList';
 
 function RecommendFilter() {
@@ -11,6 +12,20 @@ function RecommendFilter() {
 
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const s = location.state?.searchState;
+    if (s) {
+      setBirthYear(s.birthYear);
+      setGender(s.gender);
+      setMoviesTop(s.moviesTop);
+      setMoviesHot(s.moviesHot);
+      setMoviesRecent(s.moviesRecent);
+      setHasSearched(s.hasSearched);
+    }
+  }, [location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -118,21 +133,60 @@ function RecommendFilter() {
         <div style={{ marginTop: '24px' }}>
           <h2>Top5 (평점 상위)</h2>
           {moviesTop.length > 0 ? (
-            <MovieList movies={moviesTop} enableSort={false} showSort={false} />
+            <MovieList
+              movies={moviesTop}
+              enableSort={false}
+              showSort={false}
+              viewerInfo={{ birthYear, gender }}
+              searchState={{
+                birthYear,
+                gender,
+                moviesTop,
+                moviesHot,
+                moviesRecent,
+                hasSearched,
+              }}
+            />
           ) : (
             <p style={{ color: '#666' }}>Top5 추천 결과가 없습니다.</p>
           )}
 
           <h2 style={{ marginTop: '32px' }}>인기 급상승</h2>
           {moviesHot.length > 0 ? (
-            <MovieList movies={moviesHot} enableSort={false} showSort={false} />
+            <MovieList
+              movies={moviesHot}
+              enableSort={false}
+              showSort={false}
+              viewerInfo={{ birthYear, gender }}
+              searchState={{
+                birthYear,
+                gender,
+                moviesTop,
+                moviesHot,
+                moviesRecent,
+                hasSearched,
+              }}
+            />
           ) : (
             <p style={{ color: '#666' }}>인기 급상승 추천 결과가 없습니다.</p>
           )}
 
           <h2 style={{ marginTop: '32px' }}>최근 개봉 영화</h2>
           {moviesRecent.length > 0 ? (
-            <MovieList movies={moviesRecent} enableSort={false} showSort={false} />
+            <MovieList
+              movies={moviesRecent}
+              enableSort={false}
+              showSort={false}
+              viewerInfo={{ birthYear, gender }}
+              searchState={{
+                birthYear,
+                gender,
+                moviesTop,
+                moviesHot,
+                moviesRecent,
+                hasSearched,
+              }}
+            />
           ) : (
             <p style={{ color: '#666' }}>최근 개봉 추천 결과가 없습니다.</p>
           )}

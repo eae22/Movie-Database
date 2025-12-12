@@ -46,7 +46,6 @@ app.get('/movies', async (req, res) => {
 
     const params = [];
 
-    // 필터링 조건
     if (ott) {
       const list = ott.split(',');
       sql += ` AND O.ott_name IN (${list.map(() => '?').join(',')}) `;
@@ -109,11 +108,6 @@ app.get('/movies', async (req, res) => {
 
     sql += ` GROUP BY M.movie_id `;
 
-    // if (ratingMin) {
-    //   sql += ` HAVING AVG(R.rating) >= ? `;
-    //   params.push(Number(ratingMin));
-    // }
-
     // 정렬 옵션
     let order = '';
     switch (sort) {
@@ -159,7 +153,6 @@ app.get('/movies/:id', async (req, res) => {
         M.movie_id,
         M.title,
         DATE_FORMAT(M.release_date, '%Y-%m-%d') AS release_date,
-        M.country,
         M.country,
         M.run_time,
         M.allowed_age,
@@ -211,13 +204,16 @@ app.get('/movies/:id', async (req, res) => {
     const [reviews] = await pool.query(
       `
       SELECT 
-        review_id,
-        movie_id,
-        user_id,
-        rating,
-        comment,
-        DATE_FORMAT(created_at, '%Y-%m-%d') AS created_at
-      FROM Review
+        R.review_id,
+        R.movie_id,
+        R.user_id,
+        R.rating,
+        R.comment,
+        DATE_FORMAT(R.created_at, '%Y-%m-%d') AS created_at,
+        U.birth_year,
+        U.gender
+      FROM Review R
+      JOIN User U ON R.user_id = U.user_id
       WHERE movie_id = ?
       ORDER BY created_at DESC
       `,

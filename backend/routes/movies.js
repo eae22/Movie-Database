@@ -56,27 +56,6 @@ router.get('/', async (req, res) => {
       sql += ` AND (${cond.join(' OR ')}) `;
     }
 
-    // if (country) {
-    //   console.log('country 파라미터:', country);
-
-    //   const list = country.split(',');
-    //   const cond = [];
-
-    //   // '대한민국', '한국', 'KOR' 같은 값들을 모두 한국으로 취급
-    //   if (list.includes('한국')) {
-    //     cond.push("(TRIM(M.country) = '대한민국' OR TRIM(M.country) = '한국' OR TRIM(M.country) = 'KOR')");
-    //   }
-
-    //   // 외국 영화: 위 3개 값이 아닌 나머지
-    //   if (list.includes('외국')) {
-    //     cond.push("(TRIM(M.country) <> '대한민국' AND TRIM(M.country) <> '한국' AND TRIM(M.country) <> 'KOR')");
-    //   }
-
-    //   if (cond.length > 0) {
-    //     sql += ` AND (${cond.join(' OR ')}) `;
-    //   }
-    // }
-
     if (age) {
       const list = age.split(',');
       sql += ` AND M.allowed_age IN (${list.map(() => '?').join(',')}) `;

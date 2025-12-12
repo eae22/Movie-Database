@@ -1,12 +1,40 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 
 function MovieDetail() {
-  const { id } = useParams(); // /movie/:id에서 id 읽기
+  const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const viewerInfo = location.state?.viewerInfo || null;
 
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+
+  const getAgeGroup = (birthYear) => {
+    const yearNum = Number(birthYear);
+    if (!Number.isFinite(yearNum)) return null;
+
+    const currentYear = new Date().getFullYear();
+    const age = currentYear - yearNum;
+    let decade = Math.floor(age / 10) * 10;
+
+    if (decade < 10) decade = 10;
+    if (decade > 90) decade = 90;
+    return decade; // 20 → 20대
+  };
+
+  const backToRecommend = () => {
+    const searchState = location.state?.searchState;
+
+    if (searchState) {
+      // 검색 상태를 들고 /recommend 로 이동
+      navigate('/recommend', { state: { searchState } });
+    } else {
+      // 직접 /recommend로만 이동 (검색 상태 없음)
+      navigate('/recommend');
+    }
+  };
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -30,7 +58,7 @@ function MovieDetail() {
   if (error) {
     return (
       <div>
-        <button onClick={() => navigate(-1)}>← 목록으로 돌아가기</button>
+        <button onClick={backToRecommend}>← 목록으로 돌아가기</button>
         <p>영화 정보를 불러오는 중 오류가 발생했습니다.</p>
         <p>{error}</p>
       </div>
@@ -46,10 +74,27 @@ function MovieDetail() {
   const reviews = Array.isArray(data.reviews) ? data.reviews : [];
   const sameDirectorMovies = Array.isArray(data.sameDirectorMovies) ? data.sameDirectorMovies : [];
 
+  let sameGroupReviews = [];
+  let viewerAgeGroup = null;
+
+  if (viewerInfo && viewerInfo.birthYear && viewerInfo.gender) {
+    viewerAgeGroup = getAgeGroup(viewerInfo.birthYear);
+    if (viewerAgeGroup !== null) {
+      const currentYear = new Date().getFullYear();
+
+      sameGroupReviews = reviews.filter((r) => {
+        if (!r.birth_year || !r.gender) return false;
+
+        const reviewerGroup = getAgeGroup(r.birth_year);
+        return reviewerGroup === viewerAgeGroup && r.gender === viewerInfo.gender;
+      });
+    }
+  }
+
   if (!movie.movie_id) {
     return (
       <div>
-        <button onClick={() => navigate(-1)}>← 목록으로 돌아가기</button>
+        <button onClick={backToRecommend}>← 목록으로 돌아가기</button>
         <p>영화 정보를 찾을 수 없습니다.</p>
       </div>
     );
@@ -57,7 +102,7 @@ function MovieDetail() {
 
   return (
     <div>
-      <button onClick={() => navigate(-1)}>← 목록으로 돌아가기</button>
+      <button onClick={backToRecommend}>← 목록으로 돌아가기</button>
 
       <h2>{movie.title}</h2>
 
@@ -98,6 +143,17 @@ function MovieDetail() {
         })}
       </div>
 
+      {sameDirectorMovies.length > 0 && (
+        <>
+          <h3>같은 감독의 다른 작품</h3>
+          {sameDirectorMovies.map((m) => (
+            <div key={m.movie_id} onClick={() => navigate(`/movie/${m.movie_id}`)}>
+              {m.title}
+            </div>
+          ))}
+        </>
+      )}
+
       <h3>리뷰</h3>
       {reviews.length === 0 ? (
         <p>등록된 리뷰가 없습니다.</p>
@@ -114,14 +170,25 @@ function MovieDetail() {
         </div>
       )}
 
-      {sameDirectorMovies.length > 0 && (
+      {/* === 같은 나이대 + 같은 성별 리뷰 섹션 === */}
+      {viewerInfo && viewerAgeGroup !== null && sameGroupReviews.length > 0 && (
         <>
-          <h3>같은 감독의 다른 작품</h3>
-          {sameDirectorMovies.map((m) => (
-            <div key={m.movie_id} onClick={() => navigate(`/movie/${m.movie_id}`)}>
-              {m.title}
-            </div>
-          ))}
+          <h3>
+            나와 같은 {viewerAgeGroup}대 · {viewerInfo.gender === 'M' ? '남성' : '여성'} 리뷰
+          </h3>
+
+          <div>
+            {sameGroupReviews.map((r) => (
+              <div key={r.review_id} style={{ marginBottom: '12px' }}>
+                <div>평점: {r.rating}</div>
+                <div>
+                  작성자: User {r.user_id} ({r.birth_year}년생, {r.gender === 'M' ? '남' : '여'})
+                </div>
+                <div>한줄평: {r.comment}</div>
+                <div>작성일시: {r.created_at}</div>
+              </div>
+            ))}
+          </div>
         </>
       )}
     </div>

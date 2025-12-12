@@ -2,6 +2,7 @@ import express from 'express';
 import mysql from 'mysql2/promise';
 import cors from 'cors';
 import 'dotenv/config';
+import recommendRouter from './routes/recommend.js';
 
 const app = express();
 app.use(cors({ origin: 'http://localhost:5173' }));
@@ -13,22 +14,6 @@ const pool = mysql.createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-});
-
-// 테스트 API
-app.get('/test', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT NOW()');
-    res.json({
-      message: 'AWS RDS 연결 성공',
-      data: rows,
-    });
-  } catch (error) {
-    res.json({
-      message: 'AWS RDS 연결 실패',
-      error: error.toString(),
-    });
-  }
 });
 
 // Get /movies (정렬 + 필터 + 검색)
@@ -264,6 +249,8 @@ app.get('/movies/:id', async (req, res) => {
     res.status(500).json({ error: '서버 오류' });
   }
 });
+
+app.use('/api/recommend', recommendRouter(pool));
 
 // 서버 실행
 app.listen(3001, () => {

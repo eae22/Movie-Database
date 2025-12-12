@@ -1,6 +1,16 @@
 import { useNavigate } from 'react-router-dom';
+import './style.css';
 
-function MovieList({ movies, sortOption, setSortOption, enableSort = true, showSort = true, viewerInfo, searchState }) {
+function MovieList({
+  movies,
+  sortOption,
+  setSortOption,
+  enableSort = true,
+  showSort = true,
+  viewerInfo,
+  searchState,
+  from,
+}) {
   const navigate = useNavigate();
 
   if (!movies || movies.length === 0) {
@@ -61,24 +71,18 @@ function MovieList({ movies, sortOption, setSortOption, enableSort = true, showS
     : movies;
 
   return (
-    <div>
-      {/* 제목 + 정렬 셀렉트 (옵션) */}
+    <div className="movie-list">
       {enableSort && showSort && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>영화 목록</h2>
-          <div>
+        <div className="movie-list__header">
+          <h2 className="movie-list__title">영화 목록</h2>
+          <div className="movie-list__sort">
             <label>
               정렬 기준:&nbsp;
               <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
-                {/* 개봉일 기준 */}
                 <option value="release_desc">개봉일 최신순</option>
                 <option value="release_asc">개봉일 오래된 순</option>
-
-                {/* 평점 기준 */}
                 <option value="rating_desc">평점 높은 순</option>
                 <option value="rating_asc">평점 낮은 순</option>
-
-                {/* 러닝타임 기준 */}
                 <option value="runtime_desc">러닝타임 긴 순</option>
                 <option value="runtime_asc">러닝타임 짧은 순</option>
               </select>
@@ -87,49 +91,63 @@ function MovieList({ movies, sortOption, setSortOption, enableSort = true, showS
         </div>
       )}
 
-      {!enableSort && <h2>영화 목록</h2>}
+      <div className="movie-list__table-wrap">
+        <table className="movie-table">
+          <colgroup>
+            <col className="col-title" />
+            <col className="col-year" />
+            <col className="col-runtime" />
+            <col className="col-age" />
+            <col className="col-genres" />
+            <col className="col-directors" />
+            <col className="col-rating" />
+          </colgroup>
 
-      <table>
-        <thead>
-          <tr>
-            <th>제목</th>
-            <th>개봉연도</th>
-            <th>러닝타임</th>
-            <th>관람등급</th>
-            <th>장르</th>
-            <th>감독</th>
-            <th>평균 평점</th>
-          </tr>
-        </thead>
+          <thead>
+            <tr>
+              <th>제목</th>
+              <th>개봉연도</th>
+              <th>러닝타임</th>
+              <th>관람등급</th>
+              <th>장르</th>
+              <th>감독</th>
+              <th>평균 평점</th>
+            </tr>
+          </thead>
 
-        <tbody>
-          {sortedMovies.map((m) => {
-            const rating = m.avg_rating === null || m.avg_rating === undefined ? null : Number(m.avg_rating);
+          <tbody>
+            {sortedMovies.map((m) => {
+              const rating = m.avg_rating === null || m.avg_rating === undefined ? null : Number(m.avg_rating);
 
-            return (
-              <tr
-                key={m.movie_id}
-                onClick={() =>
-                  navigate(`/movie/${m.movie_id}`, {
-                    state: {
-                      viewerInfo,
-                      searchState,
-                    },
-                  })
-                }
-              >
-                <td>{m.title}</td>
-                <td>{m.release_year}</td>
-                <td>{m.run_time}분</td>
-                <td>{m.allowed_age}</td>
-                <td>{m.genres}</td>
-                <td>{m.directors}</td>
-                <td>{rating !== null && !Number.isNaN(rating) ? rating.toFixed(1) : 'N/A'}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+              return (
+                <tr
+                  key={m.movie_id}
+                  className="movie-table__row"
+                  onClick={() =>
+                    navigate(`/movie/${m.movie_id}`, {
+                      state: { from, viewerInfo, searchState },
+                    })
+                  }
+                >
+                  <td className="td-title" title={m.title}>
+                    {m.title}
+                  </td>
+                  <td className="td-center">{m.release_year}</td>
+                  <td className="td-center">{m.run_time}분</td>
+                  <td className="td-center">{m.allowed_age}</td>
+                  <td className="td-ellipsis" title={m.genres}>
+                    {m.genres}
+                  </td>
+                  <td className="td-ellipsis" title={m.directors}>
+                    {m.directors}
+                  </td>
+                  <td className="td-center">{rating !== null && !Number.isNaN(rating) ? rating.toFixed(1) : 'N/A'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

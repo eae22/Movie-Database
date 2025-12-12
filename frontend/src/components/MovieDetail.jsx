@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import './style.css';
 
 function MovieDetail() {
   const { id } = useParams();
@@ -21,19 +22,22 @@ function MovieDetail() {
 
     if (decade < 10) decade = 10;
     if (decade > 90) decade = 90;
-    return decade; // 20 → 20대
+    return decade;
   };
 
-  const backToRecommend = () => {
+  const backToList = () => {
+    const from = location.state?.from; // 'search' | 'recommend'
     const searchState = location.state?.searchState;
 
-    if (searchState) {
-      // 검색 상태를 들고 /recommend 로 이동
-      navigate('/recommend', { state: { searchState } });
-    } else {
-      // 직접 /recommend로만 이동 (검색 상태 없음)
-      navigate('/recommend');
+    if (from === 'search') {
+      return navigate('/search', { state: { searchState } });
     }
+
+    if (from === 'recommend') {
+      return navigate('/recommend', { state: { searchState } });
+    }
+
+    navigate(-1);
   };
 
   useEffect(() => {
@@ -58,7 +62,7 @@ function MovieDetail() {
   if (error) {
     return (
       <div>
-        <button onClick={backToRecommend}>← 목록으로 돌아가기</button>
+        <button onClick={backToList}>← 이전으로 돌아가기</button>
         <p>영화 정보를 불러오는 중 오류가 발생했습니다.</p>
         <p>{error}</p>
       </div>
@@ -94,103 +98,151 @@ function MovieDetail() {
   if (!movie.movie_id) {
     return (
       <div>
-        <button onClick={backToRecommend}>← 목록으로 돌아가기</button>
+        <button onClick={backToList}>← 이전으로 돌아가기</button>
         <p>영화 정보를 찾을 수 없습니다.</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <button onClick={backToRecommend}>← 목록으로 돌아가기</button>
-
-      <h2>{movie.title}</h2>
-
-      <div>개봉일: {movie.release_date}</div>
-      <div>국가: {movie.country}</div>
-      <div>러닝타임: {movie.run_time}분</div>
-      <div>관람등급: {movie.allowed_age}</div>
-      <div>장르: {movie.genres}</div>
-      <div>
-        평균 평점:{' '}
-        {movie.avg_rating !== null && movie.avg_rating !== undefined ? Number(movie.avg_rating).toFixed(1) : 'N/A'}
-      </div>
-      <div>제공하는 OTT: {ottList.length > 0 ? ottList.join(', ') : '정보 없음'}</div>
-
-      <div>
-        {' '}
-        {movie.trailer_url ? (
-          <a href={movie.trailer_url} target="_blank" rel="noreferrer">
-            예고편 보러가기
-          </a>
-        ) : (
-          '없음'
-        )}
-      </div>
-
-      <h3>감독 정보</h3>
-      <div>
-        {directors.map((d) => {
-          const genderText = d.gender === 'M' ? '남자' : d.gender === 'F' ? '여자' : d.gender;
-          return (
-            <div key={d.director_id} style={{ marginBottom: '12px' }}>
-              <div>이름: {d.name}</div>
-              <div>성별: {genderText}</div>
-              <div>국적: {d.nationality}</div>
-              <div>출생연도: {d.birth_year}</div>
-            </div>
-          );
-        })}
-      </div>
-
-      {sameDirectorMovies.length > 0 && (
-        <>
-          <h3>같은 감독의 다른 작품</h3>
-          {sameDirectorMovies.map((m) => (
-            <div key={m.movie_id} onClick={() => navigate(`/movie/${m.movie_id}`)}>
-              {m.title}
-            </div>
-          ))}
-        </>
-      )}
-
-      <h3>리뷰</h3>
-      {reviews.length === 0 ? (
-        <p>등록된 리뷰가 없습니다.</p>
-      ) : (
-        <div>
-          {reviews.map((r) => (
-            <div key={r.review_id}>
-              <div>평점: {r.rating}</div>
-              <div>작성자: User {r.user_id}</div>
-              <div>한줄평: {r.comment}</div>
-              <div>작성일시: {r.created_at}</div>
-            </div>
-          ))}
+    <div className="detail-page">
+      <div className="detail-card">
+        <div className="detail-back-layout">
+          <button className="detail-back" onClick={backToList}>
+            ← 이전으로 돌아가기
+          </button>
         </div>
-      )}
 
-      {/* === 같은 나이대 + 같은 성별 리뷰 섹션 === */}
-      {viewerInfo && viewerAgeGroup !== null && sameGroupReviews.length > 0 && (
-        <>
-          <h3>
-            나와 같은 {viewerAgeGroup}대 · {viewerInfo.gender === 'M' ? '남성' : '여성'} 리뷰
-          </h3>
+        <h2 className="detail-title">{movie.title}</h2>
 
-          <div>
-            {sameGroupReviews.map((r) => (
-              <div key={r.review_id} style={{ marginBottom: '12px' }}>
-                <div>평점: {r.rating}</div>
+        <div className="detail-content-layout">
+          <div className="detail-meta">
+            <div className="meta-item">
+              <span className="meta-label">개봉일</span>
+              <span className="meta-value">{movie.release_date}</span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-label">국가</span>
+              <span className="meta-value">{movie.country}</span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-label">러닝타임</span>
+              <span className="meta-value">{movie.run_time}분</span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-label">관람등급</span>
+              <span className="meta-value">{movie.allowed_age}</span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-label">장르</span>
+              <span className="meta-value">{movie.genres}</span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-label">평균 평점</span>
+              <span className="meta-value">
+                {movie.avg_rating !== null && movie.avg_rating !== undefined
+                  ? Number(movie.avg_rating).toFixed(1)
+                  : 'N/A'}
+              </span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-label">제공 OTT</span>
+              <span className="meta-value">{ottList.length > 0 ? ottList.join(', ') : '정보 없음'}</span>
+            </div>
+
+            <div className="meta-item meta-item--full">
+              <span className="meta-label">예고편</span>
+              <span className="meta-value">
+                {movie.trailer_url ? (
+                  <a className="detail-link" href={movie.trailer_url} target="_blank" rel="noreferrer">
+                    예고편 보러가기
+                  </a>
+                ) : (
+                  <span className="detail-dim">예고편 없음</span>
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <h3 className="detail-section-title">감독 정보</h3>
+        <div className="detail-section">
+          {directors.map((d) => {
+            const genderText = d.gender === 'M' ? '남자' : d.gender === 'F' ? '여자' : d.gender;
+            return (
+              <div key={d.director_id} className="detail-row">
                 <div>
-                  작성자: User {r.user_id} ({r.birth_year}년생, {r.gender === 'M' ? '남' : '여'})
+                  ⦁ 이름: <span>{d.name}</span>
                 </div>
-                <div>한줄평: {r.comment}</div>
-                <div>작성일시: {r.created_at}</div>
+                <div>⦁ {genderText}</div>
+                <div>⦁ {d.birth_year}년생</div>
+                <div>⦁ 국적: {d.nationality}</div>
+              </div>
+            );
+          })}
+        </div>
+
+        {sameDirectorMovies.length > 0 && (
+          <>
+            <h3 className="detail-section-title">같은 감독의 다른 작품</h3>
+            <div className="detail-section">
+              {sameDirectorMovies.map((m) => (
+                <div key={m.movie_id} className="detail-pill" onClick={() => navigate(`/movie/${m.movie_id}`)}>
+                  {m.title}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        <h3 className="detail-section-title">리뷰</h3>
+        {reviews.length === 0 ? (
+          <p className="detail-dim">등록된 리뷰가 없습니다.</p>
+        ) : (
+          <div className="detail-section">
+            {reviews.map((r) => (
+              <div key={r.review_id} className="review-card">
+                <div className="review-top">
+                  <div className="review-createdat">{r.created_at}</div>
+                  <div className="review-dim">작성자: 익명</div>
+                </div>
+                <div className="review-bottom">
+                  <div className="review-score">평점: {r.rating}</div>
+                  <div className="review-comment"> {r.comment}</div>
+                </div>
+                <p></p>
               </div>
             ))}
           </div>
-        </>
-      )}
+        )}
+
+        {/* === 같은 나이대 + 같은 성별 리뷰 섹션 === */}
+        {viewerInfo && viewerAgeGroup !== null && sameGroupReviews.length > 0 && (
+          <>
+            <h3 className="detail-section-title">
+              나와 같은 {viewerAgeGroup}대 · {viewerInfo.gender === 'M' ? '남성' : '여성'} 리뷰
+            </h3>
+
+            <div className="detail-section">
+              {sameGroupReviews.map((r) => (
+                <div key={r.review_id} className="review-card">
+                  <div className="review-top">
+                    <div className="review-createdat">{r.created_at}</div>
+                    <div className="review-dim">
+                      작성자: {r.birth_year}년생, {r.gender === 'M' ? '남' : '여'}
+                    </div>
+                  </div>
+                  <div className="review-bottom">
+                    <div className="review-score">평점: {r.rating}</div>
+                    <div className="review-comment"> {r.comment}</div>
+                  </div>
+                  <p></p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -129,7 +129,7 @@ function App() {
   return (
     <div>
       <h1 style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
-        Pickle
+        Film2Pick
       </h1>
       <Routes>
         {/* home: 버튼 2개 */}
@@ -143,14 +143,14 @@ function App() {
                   display: 'flex',
                   justifyContent: 'center',
                   gap: '24px',
-                  marginTop: '24px',
+                  marginTop: '50px',
                 }}
               >
-                <button onClick={() => navigate('/search')} style={{ padding: '12px 24px', fontSize: '16px' }}>
+                <button onClick={() => navigate('/search')} style={{ padding: '15px 24px', fontSize: '18px' }}>
                   영화 정렬 / 필터링 검색
                 </button>
-                <button onClick={() => navigate('/recommend')} style={{ padding: '12px 24px', fontSize: '16px' }}>
-                  성별, 나이대별 선호 장르 기반 영화 추천
+                <button onClick={() => navigate('/recommend')} style={{ padding: '15px 24px', fontSize: '18px' }}>
+                  성별 / 나이대별 영화 추천
                 </button>
               </div>
             </div>
@@ -164,7 +164,8 @@ function App() {
             <div>
               <FilterPanel filters={filters} setFilters={setFilters} />
 
-              <div>
+              <div className="search-box">
+                <p></p>
                 <select value={searchMode} onChange={(e) => setSearchMode(e.target.value)}>
                   <option value="all">전체</option>
                   <option value="title">제목 검색</option>
@@ -176,13 +177,21 @@ function App() {
                   placeholder="검색어 입력"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
+                  className="search-all"
                 />
 
                 <button onClick={applyFilters}>검색</button>
+                <p></p>
               </div>
 
               {/* 정렬 상태/변경함수를 MovieList로 내려줌 */}
-              <MovieList movies={movies} sortOption={sortOption} setSortOption={setSortOption} />
+              <MovieList
+                movies={movies}
+                sortOption={sortOption}
+                setSortOption={setSortOption}
+                from="search"
+                searchState={{ filters, searchMode, searchText, sortOption }}
+              />
             </div>
           }
         />

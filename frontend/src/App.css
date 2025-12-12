@@ -44,3 +44,39 @@
 .read-the-docs {
   color: #888;
 }
+
+.search-all {
+  margin: 10px;
+}
+
+.search-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.search-box select,
+.search-box input,
+.search-box button {
+  height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* input */
+.search-box input {
+  width: 220px;
+}
+
+/* select */
+.search-box select {
+  min-width: 120px;
+}
+
+/* button */
+.search-box button {
+  cursor: pointer;
+}

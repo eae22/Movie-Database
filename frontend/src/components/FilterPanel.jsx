@@ -1,4 +1,5 @@
 import React from 'react';
+import './style.css';
 
 const OTT_OPTIONS = ['넷플릭스', '티빙', '디즈니플러스', '왓챠', '웨이브', '쿠팡플레이'];
 const GENRE_OPTIONS = ['드라마', '코미디', '액션', '로맨스', '스릴러', '범죄', '판타지', '뮤지컬', '공포'];
@@ -18,14 +19,23 @@ function FilterPanel({ filters, setFilters }) {
     setFilters((prev) => {
       const prevArray = prev[category];
 
-      // 구간(min/max) 비교
-      const exists = prevArray.some((v) => v.min === value.min && v.max === value.max);
+      if (category === 'rating') {
+        const exists = prevArray.some((v) => v.min === value.min && v.max === value.max);
+
+        if (exists) {
+          return {
+            ...prev,
+            rating: prevArray.filter((v) => !(v.min === value.min && v.max === value.max)),
+          };
+        }
+
+        return { ...prev, rating: [...prevArray, value] };
+      }
+
+      const exists = prevArray.includes(value);
 
       if (exists) {
-        return {
-          ...prev,
-          [category]: prevArray.filter((v) => !(v.min === value.min && v.max === value.max)),
-        };
+        return { ...prev, [category]: prevArray.filter((v) => v !== value) };
       }
 
       return { ...prev, [category]: [...prevArray, value] };
@@ -75,7 +85,7 @@ function FilterPanel({ filters, setFilters }) {
   };
 
   return (
-    <div>
+    <div className="filter-box">
       {/* OTT 선택 */}
       <section>
         <h3>OTT 플랫폼</h3>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import MovieList from './MovieList';
+import './style.css';
 
 function RecommendFilter() {
   const [birthYear, setBirthYear] = useState('');
@@ -67,7 +68,7 @@ function RecommendFilter() {
 
       console.log('Top5 응답:', topRes);
       console.log('인기 급상승 응답:', hotRes);
-      console.log('최근 개봉 응답:', recentRes);
+      console.log('최신 개봉 응답:', recentRes);
 
       setMoviesTop(topRes.movies || []);
       setMoviesHot(hotRes.movies || []);
@@ -83,115 +84,121 @@ function RecommendFilter() {
   };
 
   return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        {/* 출생연도 */}
-        <section>
-          <h3>출생 연도</h3>
-          <input
-            type="text"
-            placeholder="예) 2002"
-            maxLength={4}
-            value={birthYear}
-            onChange={(e) => setBirthYear(e.target.value)}
-          />
-        </section>
-
-        {/* 성별 */}
-        <section>
-          <h3>성별</h3>
-          <label>
+    <div className="recommend-page">
+      <div className="recommend-card">
+        <form className="recommend-form" onSubmit={handleSubmit}>
+          <section className="recommend-section">
+            <h3>출생 연도</h3>
             <input
-              type="radio"
-              name="gender"
-              value="M"
-              checked={gender === 'M'}
-              onChange={(e) => setGender(e.target.value)}
+              className="recommend-input"
+              type="text"
+              placeholder="예) 2002"
+              maxLength={4}
+              value={birthYear}
+              onChange={(e) => setBirthYear(e.target.value)}
             />
-            남
-          </label>
+          </section>
 
-          <label>
-            <input
-              type="radio"
-              name="gender"
-              value="F"
-              checked={gender === 'F'}
-              onChange={(e) => setGender(e.target.value)}
-            />
-            여
-          </label>
-        </section>
+          <section className="recommend-section">
+            <h3>성별</h3>
+            <div className="recommend-gender">
+              <label>
+                <input
+                  type="radio"
+                  name="gender"
+                  value="M"
+                  checked={gender === 'M'}
+                  onChange={(e) => setGender(e.target.value)}
+                />
+                남
+              </label>
 
-        <button type="submit" disabled={loading}>
-          {loading ? '추천 검색 중…' : '추천 검색'}
-        </button>
-      </form>
+              <label>
+                <input
+                  type="radio"
+                  name="gender"
+                  value="F"
+                  checked={gender === 'F'}
+                  onChange={(e) => setGender(e.target.value)}
+                />
+                여
+              </label>
+            </div>
+          </section>
 
-      {/* 추천 검색을 한 이후에만 결과 섹션 보여주기 */}
-      {hasSearched && (
-        <div style={{ marginTop: '24px' }}>
-          <h2>Top5 (평점 상위)</h2>
-          {moviesTop.length > 0 ? (
-            <MovieList
-              movies={moviesTop}
-              enableSort={false}
-              showSort={false}
-              viewerInfo={{ birthYear, gender }}
-              searchState={{
-                birthYear,
-                gender,
-                moviesTop,
-                moviesHot,
-                moviesRecent,
-                hasSearched,
-              }}
-            />
-          ) : (
-            <p style={{ color: '#666' }}>Top5 추천 결과가 없습니다.</p>
-          )}
+          <button className="recommend-btn" type="submit" disabled={loading}>
+            {loading ? '추천 검색 중…' : '추천 검색'}
+          </button>
+        </form>
 
-          <h2 style={{ marginTop: '32px' }}>인기 급상승</h2>
-          {moviesHot.length > 0 ? (
-            <MovieList
-              movies={moviesHot}
-              enableSort={false}
-              showSort={false}
-              viewerInfo={{ birthYear, gender }}
-              searchState={{
-                birthYear,
-                gender,
-                moviesTop,
-                moviesHot,
-                moviesRecent,
-                hasSearched,
-              }}
-            />
-          ) : (
-            <p style={{ color: '#666' }}>인기 급상승 추천 결과가 없습니다.</p>
-          )}
+        {/* 추천 검색을 한 이후에만 결과 섹션 보여주기 */}
+        {hasSearched && (
+          <div style={{ marginTop: '24px' }}>
+            <h2>Top5 (평점 상위)</h2>
+            {moviesTop.length > 0 ? (
+              <MovieList
+                movies={moviesTop}
+                enableSort={false}
+                showSort={false}
+                viewerInfo={{ birthYear, gender }}
+                searchState={{
+                  birthYear,
+                  gender,
+                  moviesTop,
+                  moviesHot,
+                  moviesRecent,
+                  hasSearched,
+                }}
+                from="recommend"
+              />
+            ) : (
+              <p style={{ color: '#666' }}>Top5 추천 결과가 없습니다.</p>
+            )}
 
-          <h2 style={{ marginTop: '32px' }}>최근 개봉 영화</h2>
-          {moviesRecent.length > 0 ? (
-            <MovieList
-              movies={moviesRecent}
-              enableSort={false}
-              showSort={false}
-              viewerInfo={{ birthYear, gender }}
-              searchState={{
-                birthYear,
-                gender,
-                moviesTop,
-                moviesHot,
-                moviesRecent,
-                hasSearched,
-              }}
-            />
-          ) : (
-            <p style={{ color: '#666' }}>최근 개봉 추천 결과가 없습니다.</p>
-          )}
-        </div>
-      )}
+            <h2 style={{ marginTop: '32px' }}>인기 급상승</h2>
+            {moviesHot.length > 0 ? (
+              <MovieList
+                movies={moviesHot}
+                enableSort={false}
+                showSort={false}
+                viewerInfo={{ birthYear, gender }}
+                searchState={{
+                  birthYear,
+                  gender,
+                  moviesTop,
+                  moviesHot,
+                  moviesRecent,
+                  hasSearched,
+                }}
+                from="recommend"
+              />
+            ) : (
+              <p style={{ color: '#666' }}>인기 급상승 추천 결과가 없습니다.</p>
+            )}
+
+            <h2 style={{ marginTop: '32px' }}>최신 개봉 영화</h2>
+            {moviesRecent.length > 0 ? (
+              <MovieList
+                movies={moviesRecent}
+                enableSort={false}
+                showSort={false}
+                viewerInfo={{ birthYear, gender }}
+                searchState={{
+                  birthYear,
+                  gender,
+                  moviesTop,
+                  moviesHot,
+                  moviesRecent,
+                  hasSearched,
+                }}
+                from="recommend"
+              />
+            ) : (
+              <p style={{ color: '#666' }}>최신 개봉 추천 결과가 없습니다.</p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

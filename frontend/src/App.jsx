@@ -24,6 +24,9 @@ function App() {
 
   const [movies, setMovies] = useState([]);
 
+  // 정렬 상태를 App.jsx에서 관리 (default: 평점 높은 순)
+  const [sortOption, setSortOption] = useState('rating_desc');
+
   // 쿼리스트링 생성
   const buildQueryString = () => {
     const params = new URLSearchParams();
@@ -159,7 +162,8 @@ function App() {
                 <button onClick={applyFilters}>검색</button>
               </div>
 
-              <MovieList movies={movies} onMovieClick={handleMovieClick} />
+              {/* 정렬 상태/변경함수를 MovieList로 내려줌 */}
+              <MovieList movies={movies} sortOption={sortOption} setSortOption={setSortOption} />
             </div>
           }
         />

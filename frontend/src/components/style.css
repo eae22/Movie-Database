@@ -329,7 +329,7 @@
 
 .meta-item {
   display: grid;
-  grid-template-columns: 120px 1fr; /* 라벨 고정, 값 유동 */
+  grid-template-columns: 120px 1fr;
   align-items: center;
   gap: 12px;
 }
@@ -476,9 +476,32 @@
   color: rgba(255, 255, 255, 0.92);
 }
 
-/* 모바일: 제목 크기만 조금 줄임 */
 @media (max-width: 420px) {
   .detail-title {
     font-size: 28px;
   }
+}
+
+.recommend-summary {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 18px;
+}
+
+.summary-pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 800;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.summary-text {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 700;
 }

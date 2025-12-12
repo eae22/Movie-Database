@@ -7,6 +7,9 @@ function RecommendFilter() {
   const [birthYear, setBirthYear] = useState('');
   const [gender, setGender] = useState('');
 
+  const [searchedBirthYear, setSearchedBirthYear] = useState('');
+  const [searchedGender, setSearchedGender] = useState('');
+
   const [moviesTop, setMoviesTop] = useState([]);
   const [moviesHot, setMoviesHot] = useState([]);
   const [moviesRecent, setMoviesRecent] = useState([]);
@@ -74,6 +77,8 @@ function RecommendFilter() {
       setMoviesHot(hotRes.movies || []);
       setMoviesRecent(recentRes.movies || []);
 
+      setSearchedBirthYear(birthYear);
+      setSearchedGender(gender);
       setHasSearched(true);
     } catch (err) {
       console.error(err);
@@ -82,6 +87,18 @@ function RecommendFilter() {
       setLoading(false);
     }
   };
+
+  const getAgeGroup = (birthYear) => {
+    const y = Number(birthYear);
+    if (!Number.isFinite(y)) return '';
+    const age = new Date().getFullYear() - y;
+    let decade = Math.floor(age / 10) * 10;
+    if (decade < 10) decade = 10;
+    if (decade > 90) decade = 90;
+    return `${decade}대`;
+  };
+
+  const genderText = gender === 'M' ? '남' : gender === 'F' ? '여' : '';
 
   return (
     <div className="recommend-page">
@@ -134,7 +151,15 @@ function RecommendFilter() {
         {/* 추천 검색을 한 이후에만 결과 섹션 보여주기 */}
         {hasSearched && (
           <div style={{ marginTop: '24px' }}>
-            <h2>Top5 (평점 상위)</h2>
+            <div className="recommend-summary">
+              <span className="summary-pill">
+                {Math.floor((new Date().getFullYear() - searchedBirthYear) / 10) * 10}대
+              </span>
+              <span className="summary-pill">{searchedGender === 'M' ? '남' : '여'}</span>
+              <span className="summary-text">추천 결과</span>
+            </div>
+
+            <h2>Top5</h2>
             {moviesTop.length > 0 ? (
               <MovieList
                 movies={moviesTop}

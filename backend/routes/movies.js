@@ -101,9 +101,9 @@ router.get('/', async (req, res) => {
 
     sql += ` GROUP BY M.movie_id `;
 
-    if (ratingMin) {
-      sql += ` HAVING AVG(R.rating) >= ? `;
-      params.push(Number(ratingMin));
+    if (ratingMin && ratingMax) {
+      sql += ` HAVING AVG(R.rating) BETWEEN ? AND ? `;
+      params.push(Number(ratingMin), Number(ratingMax));
     }
 
     let order = '';

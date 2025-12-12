@@ -124,10 +124,10 @@ app.get('/movies', async (req, res) => {
 
     sql += ` GROUP BY M.movie_id `;
 
-    if (ratingMin) {
-      sql += ` HAVING AVG(R.rating) >= ? `;
-      params.push(Number(ratingMin));
-    }
+    // if (ratingMin) {
+    //   sql += ` HAVING AVG(R.rating) >= ? `;
+    //   params.push(Number(ratingMin));
+    // }
 
     // 정렬 옵션
     let order = '';

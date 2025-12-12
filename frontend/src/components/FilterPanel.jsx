@@ -5,7 +5,12 @@ const GENRE_OPTIONS = ['드라마', '코미디', '액션', '로맨스', '스릴�
 const YEAR_OPTIONS = ['1990s', '2000s', '2010s', '2020s'];
 const COUNTRY_OPTIONS = ['한국', '외국'];
 const AGE_OPTIONS = ['ALL', '12+', '15+', '19+'];
-const RATING_OPTIONS = ['1', '2', '3', '4', '5'];
+const RATING_OPTIONS = [
+  { label: '1 ~ 2', min: 1, max: 2 },
+  { label: '2 ~ 3', min: 2, max: 3 },
+  { label: '3 ~ 4', min: 3, max: 4 },
+  { label: '4 ~ 5', min: 4, max: 5 },
+];
 
 function FilterPanel({ filters, setFilters }) {
   // 개별 체크박스 토글
@@ -13,12 +18,16 @@ function FilterPanel({ filters, setFilters }) {
     setFilters((prev) => {
       const prevArray = prev[category];
 
-      // 이미 선택 → 제거
-      if (prevArray.includes(value)) {
-        return { ...prev, [category]: prevArray.filter((v) => v !== value) };
+      // 구간(min/max) 비교
+      const exists = prevArray.some((v) => v.min === value.min && v.max === value.max);
+
+      if (exists) {
+        return {
+          ...prev,
+          [category]: prevArray.filter((v) => !(v.min === value.min && v.max === value.max)),
+        };
       }
 
-      // 새로 선택 → 추가
       return { ...prev, [category]: [...prevArray, value] };
     });
   };
@@ -26,20 +35,42 @@ function FilterPanel({ filters, setFilters }) {
   // '전체' 체크박스 토글
   const handleSelectAll = (category, allValues) => {
     setFilters((prev) => {
+      const prevArray = prev[category];
+
+      // 평점 구간(객체 배열) 처리
+      if (category === 'rating') {
+        const allSelected = allValues.every((v) => prevArray.some((r) => r.min === v.min && r.max === v.max));
+
+        // 전체 선택 → 해제
+        if (allSelected) {
+          return { ...prev, rating: [] };
+        }
+
+        // 전체 선택 아니면 전체 추가
+        return { ...prev, rating: [...allValues] };
+      }
+
+      // 그 외 문자열 리스트 공통 처리
       const allSelected = allValues.every((v) => prev[category].includes(v));
 
-      // 이미 전체 선택 상태라면 전부 해제
       if (allSelected) {
         return { ...prev, [category]: [] };
       }
 
-      // 전체 선택 상태가 아니라면 전체 값 채우기
       return { ...prev, [category]: [...allValues] };
     });
   };
 
   // '전체' 체크박스의 체크 여부 계산
   const isAllSelected = (category, allValues) => {
+    // 평점 구간은 min/max 기준으로 비교
+    if (category === 'rating') {
+      return (
+        allValues.length > 0 && allValues.every((v) => filters.rating.some((r) => r.min === v.min && r.max === v.max))
+      );
+    }
+
+    // 나머지 문자열 기반 필터
     return allValues.length > 0 && allValues.every((v) => filters[category].includes(v));
   };
 
@@ -161,6 +192,7 @@ function FilterPanel({ filters, setFilters }) {
       {/* 평점 선택 */}
       <section>
         <h3>평점 구간</h3>
+        {/* 전체 선택 */}
         <label>
           <input
             type="checkbox"
@@ -169,14 +201,15 @@ function FilterPanel({ filters, setFilters }) {
           />
           전체
         </label>
-        {RATING_OPTIONS.map((score) => (
-          <label key={score}>
+
+        {RATING_OPTIONS.map((opt) => (
+          <label key={opt.label}>
             <input
               type="checkbox"
-              checked={filters.rating.includes(score)}
-              onChange={() => handleCheckbox('rating', score)}
+              checked={filters.rating.some((r) => r.min === opt.min && r.max === opt.max)}
+              onChange={() => handleCheckbox('rating', opt)}
             />
-            {score} 이상
+            {opt.label}
           </label>
         ))}
       </section>

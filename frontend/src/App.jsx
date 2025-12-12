@@ -37,10 +37,13 @@ function App() {
     // if (filters.country.length > 0) params.append('country', filters.country.join(','));
     if (filters.age.length > 0) params.append('age', filters.age.join(','));
 
-    if (filters.rating.length > 0) {
-      const min = Math.min(...filters.rating.map(Number));
-      params.append('ratingMin', String(min));
-    }
+    // if (filters.rating.length > 0) {
+    //   const mins = filters.rating.map((r) => r.min);
+    //   const maxs = filters.rating.map((r) => r.max);
+
+    //   params.append('ratingMin', Math.min(...mins));
+    //   params.append('ratingMax', Math.max(...maxs));
+    // }
 
     const trimmed = searchText.trim();
     if (trimmed !== '') {
@@ -68,35 +71,17 @@ function App() {
       const data = await res.json();
       console.log('/movies 응답 데이터:', data);
 
-      // country 필드 샘플 확인
-      console.log(
-        'country 필드 샘플:',
-        data.slice(0, 5).map((m) => ({
-          title: m.title,
-          country: m.country,
-        }))
-      );
-
       let filtered = [...data];
 
-      // 국적 필터는 FE에서 처리
+      // 국적 필터 처리
       if (filters.country.length > 0) {
         const wantKorean = filters.country.includes('한국');
         const wantForeign = filters.country.includes('외국');
-
-        console.log('국가 필터 상태:', {
-          filtersCountry: filters.country,
-          wantKorean,
-          wantForeign,
-        });
 
         filtered = filtered.filter((m, idx) => {
           const rawCountry = m.country;
           const c = (m.country || '').trim(); // undefined 방지
           const isKorean = c.includes('대한민국'); // '대한민국'이 들어가면 한국이라고 판단
-
-          // 각 영화별로 로그 찍어보기
-          console.log(`[국가필터] idx=${idx}, title=${m.title}, country='${rawCountry}', isKorean=${isKorean}`);
 
           if (wantKorean && !wantForeign) return isKorean;
           if (!wantKorean && wantForeign) return !isKorean;
@@ -106,6 +91,26 @@ function App() {
           return true;
         });
         console.log('국가 필터 적용 후 개수:', filtered.length);
+      }
+
+      // 평점 구간 필터 처리
+      if (filters.rating.length > 0) {
+        filtered = filtered.filter((m) => {
+          const rating = m.avg_rating === null || m.avg_rating === undefined ? null : Number(m.avg_rating);
+
+          // 평점 없는 영화는 필터에서 제외
+          if (rating === null || Number.isNaN(rating)) return false;
+
+          // 선택된 구간 중 하나라도 만족하면 통과
+          return filters.rating.some((range) => {
+            if (range.max === 5) {
+              // 마지막 구간은 4 <= r <= 5
+              return rating >= range.min && rating <= range.max;
+            }
+            // 나머지는 [min, max) 구간으로 처리
+            return rating >= range.min && rating < range.max;
+          });
+        });
       }
 
       // 전체 검색 모드(all)일 때 제목 or 감독으로 추가 필터링

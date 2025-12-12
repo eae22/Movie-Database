@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function MovieList({ movies, sortOption, setSortOption }) {
+function MovieList({ movies, sortOption, setSortOption, enableSort = true, showSort = true }) {
   const navigate = useNavigate();
 
   if (!movies || movies.length === 0) {
@@ -21,68 +21,74 @@ function MovieList({ movies, sortOption, setSortOption }) {
   };
 
   // 정렬 적용
-  const sortedMovies = [...movies].sort((a, b) => {
-    const ratingA = a.avg_rating === null || a.avg_rating === undefined ? null : Number(a.avg_rating);
-    const ratingB = b.avg_rating === null || b.avg_rating === undefined ? null : Number(b.avg_rating);
+  const sortedMovies = enableSort
+    ? [...movies].sort((a, b) => {
+        const ratingA = a.avg_rating === null || a.avg_rating === undefined ? null : Number(a.avg_rating);
+        const ratingB = b.avg_rating === null || b.avg_rating === undefined ? null : Number(b.avg_rating);
 
-    switch (sortOption) {
-      // 개봉일 기준 최신순
-      case 'release_desc':
-        return getReleaseTime(b) - getReleaseTime(a);
+        switch (sortOption) {
+          // 개봉일 기준 최신순
+          case 'release_desc':
+            return getReleaseTime(b) - getReleaseTime(a);
 
-      // 개봉일 기준 오래된 순
-      case 'release_asc':
-        return getReleaseTime(a) - getReleaseTime(b);
+          // 개봉일 기준 오래된 순
+          case 'release_asc':
+            return getReleaseTime(a) - getReleaseTime(b);
 
-      // 러닝타임 긴 순
-      case 'runtime_desc':
-        return (b.run_time || 0) - (a.run_time || 0);
-      // 러닝타임 짧은 순
-      case 'runtime_asc':
-        return (a.run_time || 0) - (b.run_time || 0);
+          // 러닝타임 긴 순
+          case 'runtime_desc':
+            return (b.run_time || 0) - (a.run_time || 0);
+          // 러닝타임 짧은 순
+          case 'runtime_asc':
+            return (a.run_time || 0) - (b.run_time || 0);
 
-      // 평점 높은 순
-      case 'rating_desc': {
-        const ra = ratingA ?? -Infinity;
-        const rb = ratingB ?? -Infinity;
-        return rb - ra;
-      }
-      // 평점 낮은 순
-      case 'rating_asc': {
-        const ra = ratingA ?? Infinity;
-        const rb = ratingB ?? Infinity;
-        return ra - rb;
-      }
+          // 평점 높은 순
+          case 'rating_desc': {
+            const ra = ratingA ?? -Infinity;
+            const rb = ratingB ?? -Infinity;
+            return rb - ra;
+          }
+          // 평점 낮은 순
+          case 'rating_asc': {
+            const ra = ratingA ?? Infinity;
+            const rb = ratingB ?? Infinity;
+            return ra - rb;
+          }
 
-      default:
-        return 0;
-    }
-  });
+          default:
+            return 0;
+        }
+      })
+    : movies;
 
   return (
     <div>
-      {/* 제목 + 정렬 토글 (표 우측 상단 배치) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>영화 목록</h2>
-        <div>
-          <label>
-            정렬 기준:&nbsp;
-            <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
-              {/* 개봉일 기준 */}
-              <option value="release_desc">개봉일 최신순</option>
-              <option value="release_asc">개봉일 오래된 순</option>
+      {/* 제목 + 정렬 셀렉트 (옵션) */}
+      {enableSort && showSort && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2>영화 목록</h2>
+          <div>
+            <label>
+              정렬 기준:&nbsp;
+              <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+                {/* 개봉일 기준 */}
+                <option value="release_desc">개봉일 최신순</option>
+                <option value="release_asc">개봉일 오래된 순</option>
 
-              {/* 평점 기준 */}
-              <option value="rating_desc">평점 높은 순</option>
-              <option value="rating_asc">평점 낮은 순</option>
+                {/* 평점 기준 */}
+                <option value="rating_desc">평점 높은 순</option>
+                <option value="rating_asc">평점 낮은 순</option>
 
-              {/* 러닝타임 기준 */}
-              <option value="runtime_desc">러닝타임 긴 순</option>
-              <option value="runtime_asc">러닝타임 짧은 순</option>
-            </select>
-          </label>
+                {/* 러닝타임 기준 */}
+                <option value="runtime_desc">러닝타임 긴 순</option>
+                <option value="runtime_asc">러닝타임 짧은 순</option>
+              </select>
+            </label>
+          </div>
         </div>
-      </div>
+      )}
+
+      {!enableSort && <h2>영화 목록</h2>}
 
       <table>
         <thead>
